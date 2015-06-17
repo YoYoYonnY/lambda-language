@@ -1,47 +1,11 @@
 main
 
-jz_data: 0
-
-jz:
-load jz_data! data
-add instruction! read jz_data
-
-jz_exec
-jz_exit
-jz_exit
-jz_exit
-jz_exit
-jz_exit
-jz_exit
-jz_exit
-
-jz_exit
-jz_exit
-jz_exit
-jz_exit
-jz_exit
-jz_exit
-jz_exit
-jz_exit
-
-jz_exec:
-load instruction! jz_data
-jz_exit
-
-jz_exit:
-load instruction! add jz_data 1
-
-A:
-print 7331
-load instruction! read data
-
-B:
-print 707
-load instruction! read data
-
 C: nop
 
 main:
+getchar !C
+putchar !C
+putchar 10
 print signof 10
 print signof 0
 print signof -10
