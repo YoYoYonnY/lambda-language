@@ -14,12 +14,12 @@ public class Argument {
 	public String output;
 
 	public boolean complete() {
-		boolean competed = true;
+		boolean completed = true;
 		if (this.input == null) {
-			competed = false;
+			completed = false;
 		} else if (this.output == null) {
 			this.output = this.input;
 		}
-		return competed;
+		return completed;
 	}
 }

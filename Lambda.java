@@ -9,7 +9,7 @@ public class Lambda  {
 	public static final int LOAD = 2;
 	public static final int ADD = 3;
 	public static final int PRINT = 4;
-	
+
 	public static final int PUTCHAR = 5;
 	public static final int GETCHAR = 6;
 	public static final int SIGNOF = 7;
@@ -45,19 +45,27 @@ public class Lambda  {
 					argument.input = arg;
 					if (argument.complete()) {
 						arguments.add(argument);
+					} else {
+						System.out.println("Error: could not find input file");
+						arguments = new ArrayList<Argument>();
+						break;
 					}
 				}
 			}
 		}
-		for (int i=0; i < arguments.size(); i++) {
-			argument = arguments.get(i);
-			String compiled = argument.output + ".L";
-			compile(argument, compiled);
-			load(argument, compiled);
-			go(argument);
+		if (arguments.size() == 0) {
+			printUsage();
+		} else {
+			for (int i=0; i < arguments.size(); i++) {
+				argument = arguments.get(i);
+				String compiled = argument.output + ".L";
+				compile(argument, compiled);
+				load(argument, compiled);
+				go(argument);
+			}
 		}
 	}
-	
+
 	public static void printUsage() {
 		System.out.println("Usages: \n"
 			+ "    lambda [file...]\n"
@@ -78,22 +86,23 @@ public class Lambda  {
 			
 			HashMap<String, Integer> labels = new HashMap<String, Integer>(100);
 			
-			labels.put("nop",   new Integer(NOP));
-			labels.put("read",  new Integer(READ));
-			labels.put("load",  new Integer(LOAD));
-			labels.put("add",   new Integer(ADD));
-			labels.put("print", new Integer(PRINT));
+			labels.put("nop",new Integer(NOP));
+			labels.put("read",new Integer(READ));
+			labels.put("load",new Integer(LOAD));
+			labels.put("add",new Integer(ADD));
+			labels.put("print",new Integer(PRINT));
+
 			labels.put("putchar", new Integer(PUTCHAR));
 			labels.put("getchar", new Integer(GETCHAR));
 			labels.put("signof",   new Integer(SIGNOF));
 
-			labels.put("instruction", new Integer(INSTRUCTION));
-			labels.put("data",        new Integer(DATA));
-			labels.put("result",      new Integer(RESULT));
+			labels.put("instruction",new Integer(INSTRUCTION));
+			labels.put("data",new Integer(DATA));
+			labels.put("result",new Integer(RESULT));
 			
 			//put all tokens in a list
-			ArrayList<String> tokens = new ArrayList<String>(1000);
-			String line, token; StringTokenizer tokenizer;
+			ArrayList<Object> tokens = new ArrayList<Object>(1000);
+			String line,token; StringTokenizer tokenizer;
 			Integer value; int lastlabel = -1;
 			try {
 				while (!in.eof) {
@@ -121,7 +130,7 @@ public class Lambda  {
 							try {
 								value = Integer.decode(token);
 								//see if is the first after a label (a variable init)
-								tokens.add(value.toString());
+								tokens.add(value);
 								tokens.add(null); //VALUE tag in postfix
 								//if (lastlabel!=tokens.size())  {
 								//}
@@ -143,7 +152,7 @@ public class Lambda  {
 			} catch (EOFException e) {}
 			in.close();
 			
-			System.out.println("compiling...");
+			System.out.println("compiling");
 			
 			FastOutputStream out = new FastOutputStream(new FileOutputStream(compiledfn));
 			
@@ -182,16 +191,16 @@ public class Lambda  {
 			}
 			out.close();
 			
-			System.out.println("compiled.");
+			System.out.println("compiled");
 			
 		} catch (IOException e) {
-			if (argument.debug) {
+			if (argument.error) {
 				System.out.println("catched "+e+" with message "+e.getMessage());
 			}
 		}
 	}
 	
-	protected static int[] memory = new int[1<<16];
+	protected static int[] memory = new int[1000];
 	protected static int memorysize;
 	
 	protected static void load(Argument argument, String fn)  {
@@ -225,19 +234,19 @@ public class Lambda  {
 			memory[RESULT+4] = VALUE;
 			memory[RESULT+5] = 0;
 			memory[RESULT+6] = VALUE; //exit
-			
+
 			if (argument.debug) {
 				System.out.println("read "+(memorysize-256)+" tokens");
 			}
 		} catch (IOException e) {
-			if (argument.debug) {
+			if (argument.error) {
 				System.out.println("catched "+e+" with message "+e.getMessage());
 			}
 		}
 	}
 	
 	protected static void go(Argument argument)  {
-		System.out.println("executing...");
+		System.out.println("executing");
 		StringBuffer buf = new StringBuffer(30);
 		while ((memory[INSTRUCTION]>0) && (memory[INSTRUCTION]<memorysize)) {
 			buf.setLength(0);
@@ -333,7 +342,7 @@ public class Lambda  {
 				}
 				break;
 			case PRINT:
-				//evaluate what's next and print that value as a integer
+				//evaluate what's next and print that value
 				memory[INSTRUCTION]++;
 				buf.append(" print");
 				interpret(argument, buf);
@@ -353,7 +362,6 @@ public class Lambda  {
 					System.out.println("-->'"+Character.toString((char)value)+"'");
 				} else {
 					System.out.print(Character.toString((char)value));
-					break;
 				}
 				break;
 			case GETCHAR:
@@ -373,7 +381,9 @@ public class Lambda  {
 						System.out.println("["+address+"]<--" + value);
 					}
 				} catch (IOException e) {
-					System.out.println("catched "+e+" with message "+e.getMessage());
+					if (argument.error) {
+						System.out.println("catched "+e+" with message "+e.getMessage());
+					}
 				}
 				break;
 			case SIGNOF:
@@ -405,5 +415,7 @@ public class Lambda  {
 				}
 				break;
 		}
+		
 	}
+	
 }
